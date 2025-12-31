@@ -145,17 +145,15 @@ class UbicacionController
         $radio = $request->radio ?? 5; // 5 km por defecto
 
         try {
-            // Fórmula de Haversine para distancia en km
-            $conductores = Ubicacion::selectRaw(
-                'conductor_id,
-                latitud,
-                longitud,
-                timestamp_ubicacion,
-                (6371 * acos(
+            $haversine = '(6371 * acos(
                     cos(radians(?)) * cos(radians(latitud)) *
                     cos(radians(longitud) - radians(?)) +
                     sin(radians(?)) * sin(radians(latitud))
-                )) as distancia_km',
+                ))';
+
+            // Fórmula de Haversine para distancia en km
+            $conductores = Ubicacion::selectRaw(
+                "conductor_id,\n                latitud,\n                longitud,\n                timestamp_ubicacion,\n                {$haversine} as distancia_km",
                 [$request->latitud, $request->longitud, $request->latitud]
             )
             ->where('tipo', 'conductor')
@@ -163,7 +161,7 @@ class UbicacionController
                 $q->where('estado', 'activo')
                   ->where('estado_conexion', 'en_linea');
             })
-            ->havingRaw('distancia_km < ?', [$radio])
+            ->whereRaw("{$haversine} < ?", [$request->latitud, $request->longitud, $request->latitud, $radio])
             ->orderBy('distancia_km')
             ->limit(10)
             ->get();

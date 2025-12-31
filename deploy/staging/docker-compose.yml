@@ -1,0 +1,181 @@
+services:
+  # Laravel App
+  app:
+    build:
+      context: ../../
+      dockerfile: deploy/staging/Dockerfile
+    container_name: carsigo_staging_app
+    restart: unless-stopped
+    working_dir: /var/www/html
+    volumes:
+      - ../../:/var/www/html
+      - ./php/local.ini:/usr/local/etc/php/conf.d/local.ini
+    networks:
+      - carsigo_staging
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      - APP_ENV=staging
+      - CACHE_DRIVER=redis
+      - SESSION_DRIVER=redis
+      - QUEUE_CONNECTION=redis
+
+  # Nginx Web Server
+  nginx:
+    image: nginx:alpine
+    container_name: carsigo_staging_nginx
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+      - "8443:443"
+    volumes:
+      - ../../:/var/www/html
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/sites/:/etc/nginx/sites-available/
+      - ./ssl/:/etc/nginx/ssl/
+    networks:
+      - carsigo_staging
+    depends_on:
+      - app
+
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: carsigo_staging_postgres
+    restart: unless-stopped
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_DB: carsigo_staging
+      POSTGRES_USER: staging_user
+      POSTGRES_PASSWORD: staging_password_here
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --lc-collate=C --lc-ctype=C"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./postgres/postgresql.conf:/etc/postgresql/postgresql.conf
+      - ./postgres/pg_hba.conf:/etc/postgresql/pg_hba.conf
+    networks:
+      - carsigo_staging
+    command: postgres -c config_file=/etc/postgresql/postgresql.conf
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: carsigo_staging_redis
+    restart: unless-stopped
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis_data:/data
+      - ./redis/redis.conf:/etc/redis/redis.conf
+    networks:
+      - carsigo_staging
+    command: redis-server /etc/redis/redis.conf
+
+  # Queue Worker
+  queue:
+    build:
+      context: ../../
+      dockerfile: deploy/staging/Dockerfile
+    container_name: carsigo_staging_queue
+    restart: unless-stopped
+    command: php artisan queue:work --sleep=3 --tries=3 --max-time=3600
+    working_dir: /var/www/html
+    volumes:
+      - ../../:/var/www/html
+    networks:
+      - carsigo_staging
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      - APP_ENV=staging
+      - CACHE_DRIVER=redis
+      - SESSION_DRIVER=redis
+      - QUEUE_CONNECTION=redis
+
+  # Laravel Reverb WebSocket Server
+  reverb:
+    build:
+      context: ../../
+      dockerfile: deploy/staging/Dockerfile
+    container_name: carsigo_staging_reverb
+    restart: unless-stopped
+    ports:
+      - "8081:8080"
+    working_dir: /var/www/html
+    volumes:
+      - ../../:/var/www/html
+    networks:
+      - carsigo_staging
+    depends_on:
+      - redis
+    environment:
+      - APP_ENV=staging
+      - REVERB_APP_KEY=reverb_key
+      - REVERB_APP_SECRET=reverb_secret
+      - REVERB_APP_ID=reverb
+      - REVERB_HOST=0.0.0.0
+      - REVERB_PORT=8080
+      - REVERB_SCHEME=http
+    command: php artisan reverb:start
+
+  # Scheduler (Cron)
+  scheduler:
+    build:
+      context: ../../
+      dockerfile: deploy/staging/Dockerfile
+    container_name: carsigo_staging_scheduler
+    restart: unless-stopped
+    command: "* * * * * cd /var/www/html && php artisan schedule:run >> /dev/null 2>&1"
+    volumes:
+      - ../../:/var/www/html
+      - ./cron/crontab:/etc/cron.d/carsigo-cron
+    networks:
+      - carsigo_staging
+    depends_on:
+      - postgres
+      - redis
+
+  # Elasticsearch (Optional - for search)
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
+    container_name: carsigo_staging_elasticsearch
+    restart: unless-stopped
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - "9201:9200"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    networks:
+      - carsigo_staging
+
+  # Kibana (Optional - for logs)
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.11.0
+    container_name: carsigo_staging_kibana
+    restart: unless-stopped
+    ports:
+      - "5602:5601"
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    networks:
+      - carsigo_staging
+    depends_on:
+      - elasticsearch
+
+networks:
+  carsigo_staging:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  elasticsearch_data:
+    driver: local

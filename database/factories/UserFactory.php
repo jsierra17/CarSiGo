@@ -29,6 +29,14 @@ class UserFactory extends Factory
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),
+            'telefono' => fake()->unique()->e164PhoneNumber(),
+            'numero_documento' => (string) fake()->unique()->numberBetween(100000000, 9999999999),
+            'tipo_documento' => 'cedula',
+            'ciudad' => 'El Carmen de Bolívar',
+            'departamento' => 'Bolívar',
+            'pais' => 'Colombia',
+            'tipo_usuario' => 'pasajero',
+            'estado_cuenta' => 'activa',
         ];
     }
 

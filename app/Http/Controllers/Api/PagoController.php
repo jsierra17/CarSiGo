@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Models\Pago;
 use App\Models\Viaje;
 use App\Models\Comision;
+use App\Models\Conductor;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Validator;
@@ -150,17 +151,19 @@ class PagoController
                 'estado' => 'pendiente',
             ]);
 
-            // NUEVO: Aplicar comisión a billetera del conductor
-            $conductor = $viaje->conductor;
-            if ($conductor && $conductor->wallet) {
-                $conductor->wallet->aplicarComision(
-                    $monto_total,
-                    $comision_porcentaje,
-                    "Comisión viaje #{$viaje->id}"
-                );
-                
-                // Actualizar balance
-                $conductor->wallet->actualizarBalance();
+            // Aplicar comisión a billetera SOLO si el pago fue en efectivo (modelo prepago)
+            if ($request->metodo_pago === 'efectivo') {
+                $conductor = $viaje->conductor;
+                if ($conductor && $conductor->wallet) {
+                    $conductor->wallet->aplicarComision(
+                        $monto_total,
+                        $comision_porcentaje,
+                        "Comisión viaje #{$viaje->id}"
+                    );
+                    
+                    // Actualizar balance
+                    $conductor->wallet->actualizarBalance();
+                }
             }
 
             // Simular procesamiento (en producción, integrar con gateway de pago)
@@ -172,7 +175,7 @@ class PagoController
 
             // Actualizar ganancias del conductor
             $conductor = $viaje->conductor;
-            $conductor->update([
+            Conductor::whereKey($conductor->id)->update([
                 'ganancias_totales' => DB::raw('ganancias_totales + ' . $monto_conductor),
                 'saldo_pendiente' => DB::raw('saldo_pendiente + ' . $monto_conductor),
                 'total_viajes' => DB::raw('total_viajes + 1'),
@@ -238,7 +241,7 @@ class PagoController
 
             // Descontar de ganancias del conductor
             $conductor = $pago->conductor;
-            $conductor->update([
+            Conductor::whereKey($conductor->id)->update([
                 'ganancias_totales' => DB::raw('ganancias_totales - ' . $pago->monto_conductor),
                 'saldo_pendiente' => DB::raw('saldo_pendiente - ' . $pago->monto_conductor),
             ]);

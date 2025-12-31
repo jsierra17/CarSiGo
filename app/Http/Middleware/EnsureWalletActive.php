@@ -18,7 +18,7 @@ class EnsureWalletActive
 
         $wallet = $user->conductor->wallet;
 
-        if (!$wallet || $wallet->status === 'blocked') {
+        if (!$wallet || !$wallet->puedeAceptarViajes()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Billetera bloqueada. Recarga saldo para continuar.',

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use OpenApi\Annotations as OA;
 use App\Models\User;
 use App\Models\Conductor;
 use Illuminate\Http\Request;
@@ -9,10 +10,46 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 
+/**
+ * @OA\Tag(
+ *     name="Auth",
+ *     description="Autenticación y gestión de usuarios"
+ * )
+ */
 class AuthController
 {
     /**
      * Registrar un nuevo usuario
+     * @OA\Post(
+     *     path="/api/auth/registro",
+     *     tags={"Auth"},
+     *     summary="Registrar un nuevo usuario",
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"name","email","password","password_confirmation","tipo_usuario","telefono","numero_documento"},
+     *             @OA\Property(property="name", type="string", example="Juan Pérez"),
+     *             @OA\Property(property="email", type="string", format="email", example="juan@example.com"),
+     *             @OA\Property(property="password", type="string", minLength=8, example="Password123"),
+     *             @OA\Property(property="password_confirmation", type="string", example="Password123"),
+     *             @OA\Property(property="tipo_usuario", type="string", enum={"pasajero","conductor"}),
+     *             @OA\Property(property="telefono", type="string", example="+573001112233"),
+     *             @OA\Property(property="numero_documento", type="string", example="1234567890"),
+     *             @OA\Property(property="numero_licencia", type="string", example="LIC-00000001"),
+     *             @OA\Property(property="fecha_vencimiento_licencia", type="string", format="date")
+     *         )
+     *     ),
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="Usuario registrado exitosamente",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string"),
+     *             @OA\Property(property="user", ref="#/components/schemas/User")
+     *         )
+     *     ),
+     *     @OA\Response(response=422, description="Error de validación")
      */
     public function registro(Request $request): JsonResponse
     {
@@ -76,6 +113,38 @@ class AuthController
 
     /**
      * Login del usuario
+     * @OA\Post(
+     *     path="/api/auth/login",
+     *     tags={"Auth"},
+     *     summary="Iniciar sesión",
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"email","password"},
+     *             @OA\Property(property="email", type="string", format="email"),
+     *             @OA\Property(property="password", type="string")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Login exitoso",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string"),
+     *             @OA\Property(property="token", type="string"),
+     *             @OA\Property(property="user", ref="#/components/schemas/User")
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Credenciales inválidas"),
+     *     @OA\Response(response=403, description="Cuenta no activa")
+     * )
+     * @OA\SecurityScheme(
+     *     securityScheme="sanctum",
+     *     type="apiKey",
+     *     in="header",
+     *     name="Authorization",
+     *     description="Bearer token"
+     * )
      */
     public function login(Request $request): JsonResponse
     {
@@ -155,6 +224,20 @@ class AuthController
 
     /**
      * Logout del usuario
+     * @OA\Post(
+     *     path="/api/auth/logout",
+     *     tags={"Auth"},
+     *     summary="Cerrar sesión",
+     *     security={{"sanctum":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Logout exitoso",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string")
+     *         )
+     *     )
+     * )
      */
     public function logout(Request $request): JsonResponse
     {
@@ -176,6 +259,20 @@ class AuthController
 
     /**
      * Obtener perfil del usuario autenticado
+     * @OA\Get(
+     *     path="/api/auth/perfil",
+     *     tags={"Auth"},
+     *     summary="Obtener perfil del usuario autenticado",
+     *     security={{"sanctum":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Perfil del usuario",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="user", ref="#/components/schemas/User")
+     *         )
+     *     )
+     * )
      */
     public function perfil(Request $request): JsonResponse
     {
@@ -267,6 +364,30 @@ class AuthController
 
     /**
      * Cambiar contraseña
+     * @OA\Post(
+     *     path="/api/auth/cambiar-password",
+     *     tags={"Auth"},
+     *     summary="Cambiar contraseña del usuario",
+     *     security={{"sanctum":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"password_actual","password_nueva","password_nueva_confirmation"},
+     *             @OA\Property(property="password_actual", type="string"),
+     *             @OA\Property(property="password_nueva", type="string", minLength=8),
+     *             @OA\Property(property="password_nueva_confirmation", type="string")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Contraseña actualizada",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string")
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Contraseña actual incorrecta")
+     * )
      */
     public function cambiarPassword(Request $request): JsonResponse
     {

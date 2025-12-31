@@ -1,0 +1,76 @@
+name: carsigo_flutter
+description: Aplicación móvil de CarSiGo - Plataforma inteligente de transporte
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+  flutter: ">=3.10.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  
+  # State management
+  provider: ^6.1.1
+  
+  # HTTP client
+  dio: ^5.4.0
+  
+  # Local storage
+  shared_preferences: ^2.2.2
+  
+  # Navigation
+  go_router: ^13.2.0
+  
+  # UI components
+  cupertino_icons: ^1.0.6
+  google_fonts: ^6.1.0
+  flutter_svg: ^2.0.9
+  cached_network_image: ^3.3.0
+  
+  # Forms & validation
+  flutter_form_builder: ^9.2.1
+  form_builder_validators: ^10.0.1
+  
+  # Maps & location
+  google_maps_flutter: ^2.5.0
+  geolocator: ^10.1.0
+  geocoding: ^2.1.1
+  
+  # Real-time notifications
+  pusher_client: ^2.0.0
+  firebase_messaging: ^14.9.4
+  firebase_core: ^2.30.0
+  
+  # Chat & messaging
+  flutter_chat_ui: ^1.6.0
+  image_picker: ^1.0.7
+  
+  # Utilities
+  intl: ^0.19.0
+  logger: ^2.0.2+1
+  equatable: ^2.0.5
+  
+  # WebSocket
+  web_socket_channel: ^2.4.0
+  
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/
+    - assets/icons/
+  
+flutter_intl:
+  enabled: true
+  class_name: S
+  main_locale: es
+  arb_dir: lib/l10n
+  output_dir: lib/generated

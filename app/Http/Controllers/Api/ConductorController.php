@@ -27,13 +27,13 @@ class ConductorController
             ], 403);
         }
 
-        $conductores = Conductor::with(['usuario:id,nombre,email,telefono,foto_perfil'])
+        $conductores = Conductor::with(['usuario:id,name,email,telefono,foto_perfil_url'])
             ->when($request->estado, function ($query) {
                 return $query->where('estado', $request->estado);
             })
             ->when($request->buscar, function ($query) {
                 return $query->whereHas('usuario', function ($q) {
-                    $q->where('nombre', 'like', '%' . request('buscar') . '%')
+                    $q->where('name', 'like', '%' . request('buscar') . '%')
                         ->orWhere('email', 'like', '%' . request('buscar') . '%');
                 });
             })
@@ -61,8 +61,8 @@ class ConductorController
         }
 
         $conductor = $user->conductor->load([
-            'usuario:id,nombre,email,telefono,foto_perfil,cédula,fecha_nacimiento',
-            'vehiculos:id,conductor_id,placa,marca,modelo,anio,numero_serie',
+            'usuario:id,name,email,telefono,foto_perfil_url,numero_documento,fecha_nacimiento',
+            'vehiculos:id,conductor_id,placa,marca,modelo,anio,color,categoria',
         ]);
 
         return response()->json([
@@ -78,7 +78,7 @@ class ConductorController
     {
         return response()->json([
             'success' => true,
-            'data' => $conductor->load('usuario:id,nombre,foto_perfil,ubicacion_ciudad'),
+            'data' => $conductor->load('usuario:id,name,foto_perfil_url,ciudad'),
         ], 200);
     }
 
@@ -164,10 +164,13 @@ class ConductorController
             // Registrar en logs
             DB::table('logs_sistema')->insert([
                 'usuario_id' => $user->id,
+                'tipo_evento' => 'otro',
+                'modulo' => 'conductores',
                 'accion' => 'cambio_estado_conductor',
                 'descripcion' => "Conductor {$conductor->usuario_id} cambió de {$estado_anterior} a {$request->estado}. Razón: {$request->razon}",
                 'ip_address' => $request->ip(),
                 'user_agent' => $request->userAgent(),
+                'estado' => 'info',
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
@@ -254,11 +257,11 @@ class ConductorController
                 'estado' => $this->verificarDocumentoVigente($user->conductor->fecha_vencimiento_licencia),
             ],
             'antecedentes' => [
-                'verificado' => $user->conductor->antecedentes_verificados,
-                'fecha_verificacion' => $user->conductor->fecha_verificacion_antecedentes,
+                'verificado' => $user->conductor->antecedentes_limpios,
+                'fecha_verificacion' => $user->conductor->fecha_ultima_verificacion,
             ],
             'seguro_vehiculo' => [
-                'activo' => $user->conductor->seguro_vehiculo_activo ?? false,
+                'activo' => $user->conductor->numero_aseguranza ? true : false,
             ],
         ];
 
@@ -399,7 +402,7 @@ class ConductorController
 
         $viajes = Viaje::where('conductor_id', $user->conductor->id)
             ->whereNotNull('calificacion_conductor')
-            ->with(['pasajero:id,nombre,foto_perfil'])
+            ->with(['pasajero:id,name,foto_perfil_url'])
             ->orderBy('hora_finalizacion', 'desc')
             ->paginate(20);
 

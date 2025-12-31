@@ -137,6 +137,62 @@ class ViajeController
     }
 
     /**
+     * Actualizar viaje (pasajero)
+     */
+    public function update(Request $request, Viaje $viaje): JsonResponse
+    {
+        $user = $request->user();
+
+        if ($user->tipo_usuario !== 'pasajero' || $viaje->pasajero_id !== $user->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No autorizado',
+            ], 403);
+        }
+
+        if ($viaje->estado !== 'solicitado') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Solo se puede actualizar un viaje solicitado',
+            ], 400);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'origen_latitud' => 'sometimes|numeric|between:-90,90',
+            'origen_longitud' => 'sometimes|numeric|between:-180,180',
+            'origen_direccion' => 'sometimes|string|max:255',
+            'destino_latitud' => 'sometimes|numeric|between:-90,90',
+            'destino_longitud' => 'sometimes|numeric|between:-180,180',
+            'destino_direccion' => 'sometimes|string|max:255',
+            'tipo' => 'sometimes|in:estandar,compartido,urgente',
+            'pasajeros_solicitados' => 'sometimes|integer|min:1|max:6',
+            'notas_especiales' => 'sometimes|string|max:500',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        try {
+            $viaje->update($validator->validated());
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Viaje actualizado',
+                'data' => $viaje,
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al actualizar viaje: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
      * Listar viajes disponibles para conductores
      */
     public function viajesDisponibles(Request $request): JsonResponse

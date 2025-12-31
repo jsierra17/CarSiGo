@@ -28,7 +28,7 @@ class SoporteController
             ], 403);
         }
 
-        $tickets = $query->with(['usuario:id,nombre,email,telefono', 'viaje:id,origen_direccion,destino_direccion'])
+        $tickets = $query->with(['usuario:id,name,email,telefono,foto_perfil_url', 'viaje:id,origen_direccion,destino_direccion'])
             ->when($request->estado, function ($query) {
                 return $query->where('estado', $request->estado);
             })
@@ -67,7 +67,7 @@ class SoporteController
         }
 
         $ticket->load([
-            'usuario:id,nombre,email,telefono',
+            'usuario:id,name,email,telefono,foto_perfil_url',
             'viaje:id,origen_direccion,destino_direccion,hora_solicitud',
             'respuestas' => function ($query) {
                 return $query->orderBy('created_at', 'asc');
@@ -97,7 +97,7 @@ class SoporteController
         $validator = Validator::make($request->all(), [
             'asunto' => 'required|string|max:255',
             'descripcion' => 'required|string|min:10|max:2000',
-            'categoria' => 'required|in:pago,seguridad,vehiculo,conductor,pasajero,aplicacion,otro',
+            'categoria' => 'required|in:viaje,pago,conductor,pasajero,vehiculo,app,otro',
             'prioridad' => 'sometimes|in:baja,media,alta,critica',
             'viaje_id' => 'sometimes|exists:viajes,id',
         ]);
@@ -112,7 +112,8 @@ class SoporteController
         // Si está relacionado con un viaje, verificar que el usuario esté involucrado
         if ($request->viaje_id) {
             $viaje = Viaje::find($request->viaje_id);
-            if ($viaje->pasajero_id !== $user->id && $viaje->conductor_id !== $user->id) {
+            $conductorId = $user->conductor ? $user->conductor->id : null;
+            if ($viaje->pasajero_id !== $user->id && $viaje->conductor_id !== $conductorId) {
                 return response()->json([
                     'success' => false,
                     'message' => 'No puedes crear un ticket para este viaje',
@@ -137,10 +138,13 @@ class SoporteController
             // Registrar en logs
             DB::table('logs_sistema')->insert([
                 'usuario_id' => $user->id,
+                'tipo_evento' => 'otro',
+                'modulo' => 'soporte',
                 'accion' => 'crear_ticket_soporte',
                 'descripcion' => "Ticket {$numero_ticket} creado en categoría {$request->categoria}",
                 'ip_address' => $request->ip(),
                 'user_agent' => $request->userAgent(),
+                'estado' => 'info',
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
@@ -238,7 +242,7 @@ class SoporteController
         }
 
         $validator = Validator::make($request->all(), [
-            'estado' => 'required|in:abierto,en_espera,en_progreso,resuelto,cerrado',
+            'estado' => 'required|in:abierto,en_progreso,esperando_usuario,resuelto,cerrado',
             'notas_cierre' => 'sometimes|string|max:500',
         ]);
 
@@ -267,10 +271,13 @@ class SoporteController
             // Registrar en logs
             DB::table('logs_sistema')->insert([
                 'usuario_id' => $user->id,
+                'tipo_evento' => 'otro',
+                'modulo' => 'soporte',
                 'accion' => 'cambio_estado_ticket',
                 'descripcion' => "Ticket {$ticket->numero_ticket} cambió de {$estado_anterior} a {$request->estado}",
                 'ip_address' => $request->ip(),
                 'user_agent' => $request->userAgent(),
+                'estado' => 'info',
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
