@@ -28,7 +28,7 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
       body: Stack(
         children: [
           // 1. Fondo de Mapa (Simulado con una imagen)
-          // TODO: Asegúrate de tener una imagen en 'assets/images/map_background.png'
+          /// TODO: Asegúrate de tener una imagen en 'assets/images/map_background.png'
           Image.asset(
             'assets/images/map_background.png',
             fit: BoxFit.cover,
