@@ -13,18 +13,11 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   void _showAuthFlow() {
-    // Cuando el usuario quiere ver viajes, lo llevamos al flujo de autenticación normal.
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (context) => const AuthGate()),
-    );
+    Navigator.of(context).push(MaterialPageRoute(builder: (context) => const AuthGate()));
   }
 
   void _navigateToBecomeDriver() {
-    // Cuando quiere ser conductor, llevamos al AuthGate, pero le decimos
-    // que el destino final, después del login, es la página de creación de perfil.
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (context) => const AuthGate(destination: CreateDriverProfilePage())),
-    );
+    Navigator.of(context).push(MaterialPageRoute(builder: (context) => const AuthGate(destination: CreateDriverProfilePage())));
   }
 
   @override
@@ -34,29 +27,31 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
       drawer: _buildAppDrawer(),
       body: Stack(
         children: [
-          // Placeholder del Mapa
-          Container(color: Colors.grey[300], child: const Center(child: Icon(Icons.map_outlined, size: 150, color: Colors.white))),
-          
-          // AppBar con botón de menú
+          // 1. Fondo de Mapa (Simulado con una imagen)
+          // TODO: Asegúrate de tener una imagen en 'assets/images/map_background.png'
+          Image.asset(
+            'assets/images/map_background.png',
+            fit: BoxFit.cover,
+            height: double.infinity,
+            width: double.infinity,
+            // En caso de que la imagen no cargue, muestra un fondo oscuro
+            errorBuilder: (context, error, stackTrace) => Container(color: const Color(0xFF2c3e50)),
+          ),
+
+          // 2. AppBar con botón de menú
           SafeArea(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-              child: Card(
-                elevation: 4,
-                shape: const CircleBorder(),
-                clipBehavior: Clip.antiAlias, // Asegura que el InkWell no se salga del círculo
-                child: InkWell(
-                  onTap: () => _scaffoldKey.currentState?.openDrawer(),
-                  child: const Padding(
-                    padding: EdgeInsets.all(12.0),
-                    child: Icon(Icons.menu, size: 24, color: Colors.black87),
-                  ),
-                ),
+              padding: const EdgeInsets.all(12.0),
+              child: FloatingActionButton(
+                mini: true,
+                onPressed: () => _scaffoldKey.currentState?.openDrawer(),
+                backgroundColor: Colors.white,
+                child: const Icon(Icons.menu, color: Colors.black87),
               ),
             ),
           ),
 
-          // Hoja inferior deslizable
+          // 3. Hoja inferior deslizable
           _buildDraggableSheet(),
         ],
       ),
@@ -64,7 +59,8 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
   }
 
   Widget _buildAppDrawer() {
-    return Drawer(
+    // ... (El código del Drawer no necesita cambios, lo dejamos como está)
+     return Drawer(
       child: ListView(
         padding: EdgeInsets.zero,
         children: [
@@ -82,13 +78,13 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
           ListTile(
             leading: const Icon(Icons.history),
             title: const Text('Mis Viajes'),
-            onTap: () => _showAuthFlow(), // Requiere login
+            onTap: () => _showAuthFlow(),
           ),
           const Divider(),
           ListTile(
             leading: const Icon(Icons.settings),
             title: const Text('Configuración'),
-            onTap: () => _showAuthFlow(), // Requiere login
+            onTap: () => _showAuthFlow(),
           ),
           ListTile(
             leading: const Icon(Icons.info_outline),
@@ -102,33 +98,57 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
 
   Widget _buildDraggableSheet() {
     return DraggableScrollableSheet(
-      initialChildSize: 0.35, minChildSize: 0.1, maxChildSize: 0.8,
+      initialChildSize: 0.4, minChildSize: 0.2, maxChildSize: 0.8,
       builder: (context, scrollController) {
-        return Card(
-          elevation: 12.0,
-          shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
-          margin: EdgeInsets.zero,
+        return Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+            boxShadow: [BoxShadow(blurRadius: 10.0, color: Colors.black26)],
+          ),
           child: ListView(
             controller: scrollController,
             padding: const EdgeInsets.all(20.0),
             children: [
               Center(child: Container(width: 40, height: 5, decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(12)))),
               const SizedBox(height: 24),
-              const Text('¿Listo para tu próximo viaje?', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 16),
-              TextField(readOnly: true, decoration: InputDecoration(prefixIcon: const Icon(Icons.my_location, color: Colors.green), hintText: 'Mi ubicación actual', border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)), filled: true, fillColor: Colors.grey[100])),
-              const SizedBox(height: 12),
-              TextField(readOnly: true, decoration: InputDecoration(prefixIcon: const Icon(Icons.location_on, color: Colors.red), hintText: 'Elige tu destino', border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)), filled: true, fillColor: Colors.grey[100])),
-              const SizedBox(height: 24),
-              ElevatedButton(
-                onPressed: _showAuthFlow,
-                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFE53935), foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-                child: const Text('Ver opciones de viaje', style: TextStyle(fontSize: 18)),
+              const Text('¿A dónde vamos hoy?', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 20),
+              // --- Campo de Destino ---
+              InkWell(
+                onTap: _showAuthFlow,
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(color: Colors.grey[100], borderRadius: BorderRadius.circular(12)),
+                  child: const Row(children: [Icon(Icons.search, color: Colors.black54), SizedBox(width: 12), Text('Elige tu destino', style: TextStyle(fontSize: 16))]),
+                ),
+              ),
+              const SizedBox(height: 20),
+              // --- Accesos directos (Casa / Trabajo) ---
+              Row(
+                children: [
+                  _buildShortcut(icon: Icons.home, label: 'Casa'),
+                  const SizedBox(width: 16),
+                  _buildShortcut(icon: Icons.work, label: 'Trabajo'),
+                ],
               ),
             ],
           ),
         );
       },
+    );
+  }
+
+  Widget _buildShortcut({required IconData icon, required String label}) {
+    return Expanded(
+      child: InkWell(
+        onTap: _showAuthFlow,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          decoration: BoxDecoration(color: Colors.grey[50], borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.grey[200]!)),
+          child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(icon, color: Colors.blueGrey), const SizedBox(width: 8), Text(label)]),
+        ),
+      ),
     );
   }
 }

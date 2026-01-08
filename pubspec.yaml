@@ -12,7 +12,6 @@ dependencies:
   supabase_flutter: ^2.5.0
   cupertino_icons: ^1.0.8
   uuid: ^4.3.3
-  # ---- DEPENDENCIA QUE FALTABA ----
   flutter_dotenv: ^5.1.0
 
 dev_dependencies:
@@ -23,6 +22,6 @@ dev_dependencies:
 flutter:
   uses-material-design: true
 
-  # ---- SECCIÓN DE ASSETS QUE FALTABA ----
   assets:
     - .env
+    - assets/images/ # <-- AÑADIDA LA CARPETA DE IMÁGENES

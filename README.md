@@ -1,6 +1,37 @@
-# carsigo
+# 🚗 CarSiGo
 
-A new Flutter project.
+CarSiGo es una plataforma de movilidad bajo demanda (tipo Uber/InDrive) que conecta a pasajeros con conductores. El proyecto está desarrollado en Flutter con un enfoque en la estabilidad, seguridad y escalabilidad para una aplicación de producción real.
+
+## ✨ Qué hace
+
+- **Para Pasajeros:** Solicitar viajes, ver la ubicación de los conductores y gestionar su historial.
+- **Para Conductores:** Aceptar viajes, gestionar su perfil, ver sus ganancias y estado.
+- **Plataforma Central:** Gestiona la autenticación de usuarios, la lógica de los viajes en tiempo real y la información de perfiles de forma segura.
+
+---
+
+## 🛠️ Tecnologías Usadas
+
+- **Frontend (App Móvil):**
+  - Flutter
+  - Dart
+
+- **Backend (Serverless):**
+  - Supabase
+
+- **Base de Datos:**
+  - PostgreSQL (a través de Supabase)
+
+- **Autenticación:**
+  - Supabase Auth
+
+- **Funcionalidades en Tiempo Real:**
+  - Supabase Realtime
+
+- **Gestión de Entorno:**
+  - flutter_dotenv
+
+---
 
 ## Getting Started
 
