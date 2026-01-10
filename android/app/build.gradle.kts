@@ -42,3 +42,6 @@ android {
 flutter {
     source = "../.."
 }
+
+// Aplica el plugin de Google Services al final
+apply(plugin = "com.google.gms.google-services")

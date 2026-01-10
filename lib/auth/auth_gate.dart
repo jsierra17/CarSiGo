@@ -1,57 +1,30 @@
 import 'package:carsigo/auth/login_page.dart';
-import 'package:carsigo/core/supabase_client.dart';
-import 'package:carsigo/drivers/driver_service.dart';
-import 'package:carsigo/home/home_page.dart';
 import 'package:carsigo/home/passenger_home_page.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
+// El nuevo AuthGate, ahora escuchando a Firebase
 class AuthGate extends StatelessWidget {
-  /// Un widget de destino opcional. Si se proporciona, el AuthGate intentará
-  /// navegar a esta página después de una autenticación exitosa.
-  final Widget? destination;
-
-  const AuthGate({super.key, this.destination});
+  const AuthGate({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<AuthState>(
-      stream: supabase.auth.onAuthStateChange,
+    return StreamBuilder<User?>(
+      stream: FirebaseAuth.instance.authStateChanges(),
       builder: (context, snapshot) {
+        // Si todavía está esperando, muestra un spinner
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Scaffold(body: Center(child: CircularProgressIndicator()));
         }
 
-        final session = snapshot.data?.session;
-
-        if (session != null) {
-          // Si el usuario ya está autenticado
-
-          // Si se especificó un destino (ej. CreateDriverProfilePage), vamos allí.
-          if (destination != null) {
-            // Usamos un Future para navegar después de que el frame se construya
-            Future.microtask(() => Navigator.of(context).pushReplacement(
-              MaterialPageRoute(builder: (context) => destination!),
-            ));
-            return const Scaffold(body: Center(child: CircularProgressIndicator()));
-          }
-
-          // Lógica estándar: verificar si es conductor o pasajero
-          return FutureBuilder(
-            future: DriverService().getDriverProfile(session.user.id),
-            builder: (context, driverSnapshot) {
-              if (driverSnapshot.connectionState == ConnectionState.waiting) {
-                return const Scaffold(body: Center(child: CircularProgressIndicator()));
-              }
-              if (driverSnapshot.hasData && driverSnapshot.data != null) {
-                return const HomePage(); // Es conductor, va a la home del conductor
-              } else {
-                return const PassengerHomePage(); // Es pasajero, va a la home del pasajero
-              }
-            },
-          );
+        // Si hay un usuario, significa que ha iniciado sesión
+        if (snapshot.hasData) {
+          // TODO: En el futuro, aquí irá la lógica para diferenciar
+          // entre conductor y pasajero, leyendo desde nuestra base de datos.
+          // Por ahora, siempre lo llevamos a la Home del Pasajero.
+          return const PassengerHomePage();
         } else {
-          // Si no hay sesión, siempre vamos a la página de login.
+          // Si no hay datos (no hay usuario), muestra la página de login
           return const LoginPage();
         }
       },

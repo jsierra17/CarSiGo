@@ -4,15 +4,21 @@ publish_to: 'none'
 version: 1.0.0+1
 
 environment:
-  sdk: ^3.10.4
+  sdk: '>=3.10.4 <4.0.0'
 
 dependencies:
   flutter:
     sdk: flutter
-  supabase_flutter: ^2.5.0
+
+  # --- NUEVAS DEPENDENCIAS DE FIREBASE ---
+  firebase_core: ^2.32.0
+  firebase_auth: ^4.20.0
+  google_sign_in: ^6.2.1
+
+  # --- DEPENDENCIAS ANTERIORES (Supabase eliminada) ---
   cupertino_icons: ^1.0.8
   uuid: ^4.3.3
-  flutter_dotenv: ^5.1.0
+  flutter_svg: ^2.0.10+1
 
 dev_dependencies:
   flutter_test:
@@ -23,5 +29,4 @@ flutter:
   uses-material-design: true
 
   assets:
-    - .env
-    - assets/images/ # <-- AÑADIDA LA CARPETA DE IMÁGENES
+    - assets/images/
